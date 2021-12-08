@@ -1,9 +1,18 @@
 import json
+import os
+import boto3
 
-def get_devices(context, event):
+myDeviceTable = os.environ['DeviceTable']
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table(myDeviceTable)
+
+
+def get_devices(context, event): 
+    print(myDeviceTable)
+    data = table.scan()
+    result = data["Items"]
     return {
-        "statusCode": 400,
-        "body": json.dumps([{"id": "a", "devType": "co2", "name": "device1"},
-                            {"id": "b", "devType": "pir", "name": "device2"}]),
-        "headers": {'Access-Control-Allow-Origin': '*'}
-    }
+    "statusCode": 400,
+    "body": json.dumps(result),
+    "headers": {'Access-Control-Allow-Origin': '*'}
+  }

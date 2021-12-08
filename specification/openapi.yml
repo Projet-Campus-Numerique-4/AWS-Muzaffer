@@ -1,9 +1,9 @@
 openapi: '3.0.2'
 info:
-  title: API Title
+  title: myAPI 
   version: '1.0'
 servers:
-  - url: https://api.server.muzaffer/v1
+  - url: https://api.server.test/v1
 
 components:
   schemas:
@@ -11,42 +11,39 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/device'
-
     device:
       type: object
       required:
         - "deviceName"
         - "deviceType"
       properties:
-        deviceId:
+        deviceId: 
           type: "string"
           description: "Unique id of the device"
-        deviceName:
+        deviceName: 
           type: "string"
           description: "Name of the device"
         deviceType:
           type: "string"
           description: "Type of the device"
           enum: ["co2", "pir"]
-          
+
 paths:
   /devices:
     get:
-      description: 'Get user info'
+      description: Get all devices
       responses:
         '200':
-          description: List of devices
+          description: A list of devices
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/devices'
-      x-amazon-apigateway-integration:
-        credentials:
-          Fn::Sub: ${ApiRole.Arn}
-        uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDevices.Arn}/invocations
-        httpMethod: POST
-        timeoutInMillis: 3000
-        type: "aws_proxy"
-
-
+      x-amazon-apigateway-integration: 
+        credentials: 
+          Fn::Sub: ${ApiRole.Arn} 
+        uri: 
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDevices.Arn}/invocations 
+        httpMethod: POST 
+        timeoutInMillis: 3000 
+        type: "aws_proxy" 

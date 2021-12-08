@@ -1,5 +1,6 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: 'AWS::Serverless-2016-10-31'
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+
 Parameters:
   AppName:
     Type: String
@@ -7,6 +8,9 @@ Parameters:
   Stage:
     Type: String
     Default: dev
+  DeviceTableName:
+    Type: String
+    Default: DeviceTableMuzaffer
 
 Resources:
   Api:
@@ -24,8 +28,8 @@ Resources:
         Fn::Transform:
           Name: AWS::Include
           Parameters:
-           Location: specification/openapi.yml
-           
+            Location: specification/openapi.yml
+
   GetDevices:
     Type: AWS::Serverless::Function
     Properties:
@@ -36,7 +40,22 @@ Resources:
         Fn::Sub: ${AppName}-get-devices-${Stage}
       Description: Get the list of devices
       CodeUri: ./src/devices
-      Handler: devices.get_devices
+      Handler: handler.get_devices
+      Policies:
+        Version: "2012-10-17"
+        Statement: 
+          Sid: "ReadWriteTable"
+          Effect: "Allow"
+          Action: 
+            - dynamodb:GetItem
+            - dyanmodb:Scan
+            - dynamodb:Query
+          Resource: 
+            Fn::Sub: "arn:aws:dynamodb:*:*:table/${DeviceTableName}"
+      Environment:
+        Variables:
+          DeviceTable:
+            Fn::Sub: ${DeviceTableName}
 
   ApiRole:
     Type: AWS::IAM::Role
@@ -64,3 +83,41 @@ Resources:
                   - lambda:InvokeFunction
                 Resource:
                   Fn::Sub: ${GetDevices.Arn}
+
+  DeviceTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+      -
+        AttributeName: "DeviceId"
+        AttributeType: "N"
+      -
+        AttributeName: "DeviceName"
+        AttributeType: "S"
+      -
+        AttributeName: "DeviceType"
+        AttributeType: "S"
+      KeySchema:
+      -
+        AttributeName: "DeviceId"
+        KeyType: "HASH"
+      -
+        AttributeName: "DeviceName"
+        KeyType: "RANGE"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "10"
+        WriteCapacityUnits: "10"
+      TableName:
+        Fn::Sub: "${DeviceTableName}"
+      GlobalSecondaryIndexes:
+      -
+        IndexName: "DeviceType"
+        KeySchema: 
+        -
+          AttributeName: "DeviceType"
+          KeyType: "HASH"    
+        Projection: 
+          ProjectionType: "ALL"
+        ProvisionedThroughput: 
+            ReadCapacityUnits: "10"
+            WriteCapacityUnits: "10"
