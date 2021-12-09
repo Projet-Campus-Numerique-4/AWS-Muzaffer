@@ -1,18 +1,23 @@
+import boto3
 import json
 import os
-import boto3
 
-myDeviceTable = os.environ['DeviceTable']
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(myDeviceTable)
+TABLE_NAME = os.environ["TABLE_NAME"]
 
-
-def get_devices(context, event): 
-    print(myDeviceTable)
+def get_devices(context, event):
+  dynamodb = boto3.resource('dynamodb')
+  table = dynamodb.Table(TABLE_NAME)
+  try:
     data = table.scan()
-    result = data["Items"]
+  except Exception as e:
+      return {
+        "statusCode": 418,
+        "body": json.dumps(e),
+        "headers": {'Access-Control-Allow-Origin': '*'}}
+  else:
+    result=data["Items"]
     return {
-    "statusCode": 400,
-    "body": json.dumps(result),
-    "headers": {'Access-Control-Allow-Origin': '*'}
-  }
+      "statusCode": 200,
+      "body": json.dumps(result),
+      "headers": {'Access-Control-Allow-Origin': '*'}
+    }
