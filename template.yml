@@ -13,6 +13,17 @@ Resources:
   Api:
     Type: AWS::Serverless::Api
     Properties:
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          Description: Muzaffer's usage plan
+          Quota:
+            Limit: 500
+            Period: MONTH
+          Throttle:
+            BurstLimit: 200
+            RateLimit: 100
       Cors:
         AllowMethods: "'POST, GET, OPTIONS, PUT'"
         AllowHeaders: "'Accept, Content-Type, Content-Length, Authorization, X-Api-Key'"
@@ -26,7 +37,6 @@ Resources:
           Name: AWS::Include
           Parameters:
             Location: specification/openapi.yml
-          
   ApiRole:
     Type: AWS::IAM::Role
     Properties:
