@@ -37,13 +37,13 @@ Resources:
           Name: AWS::Include
           Parameters:
             Location: specification/openapi.yml
-  ApiRole:
+  ApiGetRole:
     Type: AWS::IAM::Role
     Properties:
       Path: 
         Fn::Sub: /${Stage}/${AppName}/serviceRoles/
       RoleName: 
-        Fn::Sub: ${AppName}-api-execution-role-${Stage}
+        Fn::Sub: ${AppName}-api-execution-get-role-${Stage}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -68,7 +68,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       Path: 
-        Fn::Sub: /${Stage}/${AppName}/serviceRoles/
+        Fn::Sub: /${Stage}/${AppName}/get/serviceRoles/
       RoleName: 
         Fn::Sub: ${AppName}-get-devices-role-${Stage}
       AssumeRolePolicyDocument:
@@ -102,7 +102,6 @@ Resources:
                   - logs:*
                 Resource:
                   "arn:aws:logs:*:*:*"
-
   DevicesTable:
     Type: AWS::DynamoDB::Table
     Properties: 
@@ -139,3 +138,85 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref DevicesTable
+             
+  PostDevice:
+    Type: AWS::Serverless::Function
+    Properties:
+      Tracing: Active
+      Runtime: python3.8
+      PackageType: Zip
+      FunctionName:
+        Fn::Sub: ${AppName}-post-device-${Stage}
+      Description: Post a device
+      CodeUri: ./src/devices
+      Handler: devices.post_device
+      Role: 
+        Fn::Sub: ${PostDeviceRole.Arn}
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DevicesTable
+
+  ApiPostRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: 
+          Fn::Sub: /${Stage}/${AppName}/api-post/serviceRoles/
+        RoleName: 
+          Fn::Sub: ${AppName}-api-execution-post-role-${Stage}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - apigateway.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: 
+              Fn::Sub: ${AppName}-api-execution-role-policy-${Stage}
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - lambda:InvokeFunction
+                  Resource:
+                    Fn::Sub: ${PostDevice.Arn}
+  PostDeviceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: 
+        Fn::Sub: /${Stage}/${AppName}/post/serviceRoles/
+      RoleName: 
+        Fn::Sub: ${AppName}-post-device-role-${Stage}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: 
+            Fn::Sub: ${AppName}-post-device-role-policy-dynamo-${Stage}
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  Fn::Sub: ${DevicesTable.Arn}
+        - PolicyName: 
+            Fn::Sub: ${AppName}-post-device-role-policy-logs-${Stage}
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource:
+                  "arn:aws:logs:*:*:*"

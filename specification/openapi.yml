@@ -51,9 +51,26 @@ paths:
               $ref: '#/components/schemas/devices'
       x-amazon-apigateway-integration:
         credentials:
-          Fn::Sub: ${ApiRole.Arn}
+          Fn::Sub: ${ApiGetRole.Arn}
         uri:
           Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDevices.Arn}/invocations
+        httpMethod: POST
+        timeoutInMillis: 3000
+        type: "aws_proxy"
+    post:
+      description: "Post a device"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+             schema:
+              $ref: '#/components/schemas/devices'
+      x-amazon-apigateway-integration:
+        credentials:
+          Fn::Sub: ${ApiPostRole.Arn}
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostDevice.Arn}/invocations
         httpMethod: POST
         timeoutInMillis: 3000
         type: "aws_proxy"
